@@ -1,36 +1,9 @@
-<?php
-$is_defend = true;
-$nosession = true;
-require './includes/common.php';
-
-@header('Content-Type: text/html; charset=UTF-8');
-
-$other=isset($_GET['other'])?true:false;
-$trade_no=daddslashes($_GET['trade_no']);
-$sitename=base64_decode(daddslashes($_GET['sitename']));
-$row=$DB->getRow("SELECT * FROM pre_order WHERE trade_no='{$trade_no}' limit 1");
-if(!$row)sysmsg('该订单号不存在，请返回来源地重新发起请求！');
-if($row['status']==1)sysmsg('该订单已完成支付，请勿重复支付');
-$gid = $DB->getColumn("SELECT gid FROM pre_user WHERE uid='{$row['uid']}' limit 1");
-$paytype = \lib\Channel::getTypes($row['uid'], $gid);
-$payMoney = $row['realmoney'] ? $row['realmoney'] : $row['money'];
-$feeMoney = ($row['realmoney'] && $row['realmoney'] != $row['money']) ? round($row['realmoney'] - $row['money'], 2) : 0;
-
-if(strpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger')!==false){
-	$paytype = array_values($paytype);
-	foreach($paytype as $i=>$s){
-		if($s['name']=='wxpay'){
-			$temp = $paytype[$i];
-			$paytype[$i] = $paytype[0];
-			$paytype[0] = $temp;
-		}
-	}
-}
-?>
 <!DOCTYPE html>
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0" name="viewport">
-<title>收银台 | <?php echo $sitename?$sitename:$conf['sitename']?> </title>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0">
+<title>收银台 UI 预览</title>
 <link href="/assets/css/reset.css" rel="stylesheet" type="text/css">
 <link href="/assets/css/main12.css?v=2" rel="stylesheet" type="text/css">
 <style>
@@ -211,15 +184,6 @@ body.cashier-modern {
 .cashier-modern .crypto-trx {
     background: #ef0027;
 }
-.cashier-modern .empty-method {
-    margin: 4px 0 0;
-    padding: 18px;
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
-    color: #64748b;
-    text-align: center;
-    font-size: 14px;
-}
 .cashier-modern .immediate-pay12 {
     width: min(720px, calc(100% - 28px));
     height: auto;
@@ -245,13 +209,18 @@ body.cashier-modern {
     color: #dc2626;
 }
 .cashier-modern .immediate_pay {
+    display: block;
     width: 178px;
     height: 52px;
     line-height: 52px;
     border-radius: 8px;
     background: #2563eb;
+    color: #fff;
+    text-align: center;
+    cursor: pointer;
     font-size: 17px;
     font-weight: 700;
+    text-decoration: none;
 }
 .cashier-modern .immediate_pay:hover {
     color: #fff;
@@ -260,6 +229,7 @@ body.cashier-modern {
 .cashier-modern .footer12 {
     margin-top: 34px;
     color: #a3aab7;
+    text-align: center;
 }
 @media screen and (max-width: 640px) {
     .cashier-modern {
@@ -330,124 +300,89 @@ body.cashier-modern {
 </style>
 </head>
 <body class="cashier-modern">
-<!--导航-->
 <div class="w100 navBD12">
     <div class="w1080 nav12">
         <div class="nav12-left">
-            <img src="/assets/img/logo.png">
+            <img src="/assets/img/logo.png" alt="Logo">
         </div>
-		<div class="nav12-right">
-            收银台
-        </div>
-
+        <div class="nav12-right">收银台</div>
     </div>
 </div>
-<input type="hidden" name="trade_no" value="<?php echo $trade_no?>"/>
-<!--订单金额-->
-<?php if($other){?>
-<div class="w1080 order-amount12" style="height: auto;">
-    <h2><font style="color: red">当前支付方式暂时关闭维护，请更换其他方式支付</font></h2>
-</div>
-<?php if(in_array('qqpay',array_column($paytype,'name'))){?>
-<div class="w1080 order-amount12" style="height: auto;">
-    <h2 style="font-size:18px"><font style="color: green">如果您需要微信支付请将微信余额转到QQ再选择QQ钱包支付！</font></h2>
-	<h3><a href="./wx.html" style="font-size:20px;color:blue">点击查看微信余额转到QQ钱包教程</a></h3>
-</div>
-<?php }}else{?>
+
 <div class="w1080 order-amount12 checkout-card">
     <div class="order-summary-head">
         <span class="label">订单金额</span>
-        <strong><?php echo $row['money']?></strong><small>元</small>
+        <strong>99.00</strong><small>元</small>
         <div class="amount-note">请确认订单信息后选择支付方式</div>
     </div>
     <ul class="order-amount12-left">
         <li>
             <span>商品名称：</span>
-            <span><?php echo $row['name']?></span>
+            <span>会员套餐 - 月度订阅</span>
         </li>
         <li>
             <span>订单号：</span>
-            <span><?php echo $trade_no?></span>
+            <span>20260625153000123456</span>
         </li>
-		<li>
+        <li>
             <span>创建时间：</span>
-            <span><?php echo $row['addtime']?></span>
+            <span>2026-06-25 15:30:00</span>
         </li>
     </ul>
 </div>
-<?php }?>
-<!--支付方式-->
+
 <div class="w1080 PayMethod12 checkout-card">
     <div class="row">
         <h2>支付方式</h2>
-        <?php if(empty($paytype)){?>
-        <div class="empty-method">当前没有可用支付方式，请联系商户处理</div>
-        <?php }else{?>
         <ul class="types">
-		<?php foreach($paytype as $rows){?>
-          <li class="pay_li" value="<?php echo $rows['id']?>">
-             <?php
-             $typeText = $rows['showname'].$rows['name'];
-             if(preg_match('/USDC/i', $typeText)){
-                echo '<i class="crypto-icon crypto-usdc">US</i>';
-             }elseif(preg_match('/TRX|TRON/i', $typeText)){
-                echo '<i class="crypto-icon crypto-trx">TR</i>';
-             }elseif(preg_match('/USDT|加密|虚拟|Crypto/i', $typeText)){
-                echo '<i class="crypto-icon">UT</i>';
-             }else{
-                echo '<img src="/assets/icon/'.$rows['name'].'.ico" onerror="this.style.display=\'none\'">';
-             }
-             ?>
-             <span><?php echo $rows['showname']?></span>
-          </li>
-		<?php }?>
+            <li class="active">
+                <i class="crypto-icon">UT</i>
+                <span>USDT</span>
+            </li>
+            <li>
+                <i class="crypto-icon crypto-usdc">US</i>
+                <span>USDC</span>
+            </li>
+            <li>
+                <i class="crypto-icon crypto-trx">TR</i>
+                <span>TRX / TRON</span>
+            </li>
+            <li>
+                <img src="/assets/icon/alipay.ico" alt="">
+                <span>支付宝</span>
+            </li>
+            <li>
+                <img src="/assets/icon/wxpay.ico" alt="">
+                <span>微信支付</span>
+            </li>
+            <li>
+                <img src="/assets/icon/paypal.ico" alt="">
+                <span>PayPal</span>
+            </li>
         </ul>
-        <?php }?>
     </div>
 </div>
-<!--立即支付-->
+
 <div class="w1080 immediate-pay12 checkout-card">
-  <div class="immediate-pay12-right">
-      <span>需支付：<strong><?php echo $payMoney?></strong>元<?php if($feeMoney)echo '（包含'.$feeMoney.'元手续费）';?></span>
+    <div class="immediate-pay12-right">
+        <span>需支付：<strong>99.00</strong>元</span>
         <a class="immediate_pay">立即支付</a>
     </div>
 </div>
-<div class="mt_agree">
-  <div class="mt_agree_main">
-    <h2>提示信息</h2>
-    <p id="errorContent" style="text-align:center;line-height:36px;"></p>
-    <a class="close_btn">确定</a>
-  </div>
-</div>
-<!--底部-->
+
 <div class="w1080 footer12">
-    <p> <?php echo $sitename?$sitename:$conf['sitename']?></p>
+    <p>演示支付站点</p>
 </div>
 
-<script src="<?php echo $cdnpublic?>jquery/1.12.4/jquery.min.js"></script>
-<script type="text/javascript">
-$(document).ready(function(){
-	$(".types li").click(function(){
-		$(".types li").each(function(){
-			$(this).attr('class','');
-		});
-		$(this).attr('class','active');
-	});
-	$(document).on("click", ".immediate_pay", function () {
-		var value = $(".types").find('.active').attr('value');
-		var trade_no = $("input[name='trade_no']").val();
-		if(!value){
-			$("#errorContent").text("请先选择支付方式");
-			$(".mt_agree").show();
-			return false;
-		}
-		window.location.href='./submit2.php?typeid='+value+'&trade_no='+trade_no;
-	});
-	$(".close_btn").click(function(){
-		$(".mt_agree").hide();
-	});
-	$(".types li:first").click();
-})
+<script>
+document.querySelectorAll('.types li').forEach(function(item) {
+    item.addEventListener('click', function() {
+        document.querySelectorAll('.types li').forEach(function(node) {
+            node.classList.remove('active');
+        });
+        item.classList.add('active');
+    });
+});
 </script>
 </body>
 </html>
