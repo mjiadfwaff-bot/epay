@@ -1643,7 +1643,7 @@ if($errmsg2){
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-3 control-label">群机器人Webhook地址</label>
-	  <div class="col-sm-9"><input type="text" name="msgrobot_url" value="<?php echo $conf['msgrobot_url']; ?>" class="form-control"/><font color="green">仅支持填写企业微信、钉钉、飞书群机器人的Webhook地址</font></div>
+	  <div class="col-sm-9"><input type="text" name="msgrobot_url" value="<?php echo $conf['msgrobot_url']; ?>" class="form-control"/><font color="green">支持企业微信、钉钉、飞书、Telegram。Telegram格式：telegram://send?token=BOT_TOKEN&chat_id=CHAT_ID，群聊ID通常为负数</font></div>
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-3 control-label">管理员手机号码</label>
@@ -1666,7 +1666,7 @@ if($errmsg2){
 	  <div class="col-sm-9"><select class="form-control" name="mailnotice" default="<?php echo $conf['mailnotice']?>"><option value="0">关闭</option><option value="1">开启</option></select></div>
 	</div><br/>
 	<div class="form-group">
-	  <label class="col-sm-3 control-label">企业微信/钉钉/飞书群机器人开关</label>
+	  <label class="col-sm-3 control-label">企业微信/钉钉/飞书/Telegram群机器人开关</label>
 	  <div class="col-sm-9"><select class="form-control" name="robotnotice" default="<?php echo $conf['robotnotice']?>"><option value="0">关闭</option><option value="1">开启</option></select></div>
 	</div><br/>
 	<h4 style="text-align: center;">用户接收消息类型开关</h4>

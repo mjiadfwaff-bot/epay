@@ -155,7 +155,7 @@ class MsgNotice
             $jumpurl = $siteurl.'user/';
         }
         if(empty($template_id) || empty($wid)) return false;
-    
+
         $wechat = new \lib\wechat\WechatAPI($wid);
         try{
             return $wechat->sendTemplateMessage($openid, $template_id, $jumpurl, $data);
@@ -185,14 +185,19 @@ class MsgNotice
         if(empty($url)) return false;
         [$title, $content] = self::get_msg_tpl($scene, $param);
         if(empty($content)) return;
-        
+
         return self::robot_webhook($url, $title, $content, $admin);
     }
 
     public static function robot_webhook($url, $title, $content, $admin = false){
         global $conf, $CACHE;
+        $telegram = self::parse_telegram_webhook($url);
+        if($telegram){
+            return self::send_telegram_webhook($telegram['token'], $telegram['chat_id'], $title, $content, $admin);
+        }
+
         $content = str_replace(['*', '<br/>', '<b>', '</b>'], ['\*', "\n", '**', '**'], $content);
-        
+
         if (strpos($url, 'oapi.dingtalk.com')) {
             $content = '### '.$title."  \n ".str_replace("\n", "  \n ", $content);
             $post = [
@@ -234,6 +239,85 @@ class MsgNotice
             }
         }
         return false;
+    }
+
+    private static function parse_telegram_webhook($url){
+        $url = trim($url);
+        if(empty($url)) return false;
+
+        $parts = parse_url($url);
+        if($parts === false || empty($parts['scheme'])) return false;
+
+        $scheme = strtolower($parts['scheme']);
+        if($scheme == 'telegram' || $scheme == 'tg'){
+            if(isset($parts['query'])){
+                parse_str($parts['query'], $query);
+                if(!empty($query['token']) && !empty($query['chat_id'])){
+                    return ['token'=>$query['token'], 'chat_id'=>$query['chat_id']];
+                }
+            }
+
+            if(!empty($parts['host']) && !empty($parts['path'])){
+                return ['token'=>$parts['host'], 'chat_id'=>ltrim($parts['path'], '/')];
+            }
+
+            if(!empty($parts['user']) && !empty($parts['host'])){
+                $token = $parts['user'];
+                if(!empty($parts['pass'])) $token .= ':'.$parts['pass'];
+                return ['token'=>$token, 'chat_id'=>$parts['host']];
+            }
+        }
+
+        if(strpos($url, 'api.telegram.org') !== false){
+            $token = '';
+            if(!empty($parts['path']) && preg_match('#/bot([^/]+)/sendMessage#', $parts['path'], $match)){
+                $token = $match[1];
+            }
+            if($token && isset($parts['query'])){
+                parse_str($parts['query'], $query);
+                if(!empty($query['chat_id'])){
+                    return ['token'=>$token, 'chat_id'=>$query['chat_id']];
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static function send_telegram_webhook($token, $chat_id, $title, $content, $admin = false){
+        global $CACHE;
+        $token = trim($token);
+        $chat_id = trim($chat_id);
+        if(empty($token) || empty($chat_id)) return false;
+
+        $url = 'https://api.telegram.org/bot'.$token.'/sendMessage';
+        $post = [
+            'chat_id' => $chat_id,
+            'text' => self::format_telegram_content($title, $content),
+            'parse_mode' => 'HTML',
+            'disable_web_page_preview' => true,
+        ];
+        $result = get_curl($url, json_encode($post), 0, 0, 0, 0, 0, ['Content-Type: application/json; charset=UTF-8']);
+        $arr = json_decode($result, true);
+        if(isset($arr['ok']) && $arr['ok'] == true){
+            return true;
+        }else{
+            if($admin){
+                $CACHE->save('mailerrmsg', ['errmsg'=>$result, 'time'=>date('Y-m-d H:i:s')], 86400);
+            }
+        }
+        return false;
+    }
+
+    private static function format_telegram_content($title, $content){
+        $title = htmlspecialchars(strip_tags($title), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $content = str_replace(["\r\n", "\r", '<br>', '<br/>', '<br />'], ["\n", "\n", "\n", "\n", "\n"], $content);
+        $content = preg_replace('#<b>\s*#i', '[[TG_B_OPEN]]', $content);
+        $content = preg_replace('#</b>\s*#i', '[[TG_B_CLOSE]]', $content);
+        $content = strip_tags($content, '<b>');
+        $content = htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $content = str_replace(['[[TG_B_OPEN]]', '[[TG_B_CLOSE]]'], ['<b>', '</b>'], $content);
+        return '<b>'.$title.'</b>'."\n".$content;
     }
 
     private static function get_msg_tpl($scene, $param){

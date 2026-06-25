@@ -181,7 +181,7 @@ if(strlen($userrow['phone'])==11){
 				 </div>
 				</div>
 
-								
+
 				<?php if($conf['voicenotice'] == 1){?><div class="line line-dashed b-b line-lg pull-in"></div>
 				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4>云音响设置：</h4></div></div>
 				<div class="form-group">
@@ -329,7 +329,7 @@ if(strlen($userrow['phone'])==11){
 						<div class="input-group"><input class="form-control" type="text" name="pay_minmoney" value="<?php echo $userrow['pay_minmoney']?>" placeholder="留空则不限制最小支付金额"><span class="input-group-addon">元</span></div>
 					</div>
 				</div>
-				
+
 				<div class="form-group">
 				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editInfo" value="确定修改" class="btn btn-primary form-control"/><br/>
 				 </div>
@@ -391,7 +391,7 @@ if(strlen($userrow['phone'])==11){
 				<?php if($conf['robotnotice']){?><div class="form-group">
 					<label class="col-sm-2 control-label">群机器人Webhook地址</label>
 					<div class="col-sm-9">
-					<input class="form-control" type="text" name="notice_msgrobot_url" value="<?php echo $userrow['msgconfig']['msgrobot_url']?>" placeholder="仅支持填写企业微信、钉钉、飞书群机器人的Webhook地址">
+					<input class="form-control" type="text" name="notice_msgrobot_url" value="<?php echo $userrow['msgconfig']['msgrobot_url']?>" placeholder="支持企业微信、钉钉、飞书、Telegram。Telegram格式：telegram://send?token=BOT_TOKEN&chat_id=CHAT_ID">
 					</div>
 				</div><?php }?>
 				<div class="form-group">
@@ -548,7 +548,7 @@ var handlerEmbed = function (captchaObj) {
 					layer.alert(data.msg);
 					captchaObj.reset();
 				}
-			} 
+			}
 		});
 	}).onError(function(){
 		layer.msg('验证码加载失败，请刷新页面重试', {icon: 5});
@@ -982,7 +982,7 @@ function connect(type){
 			}else{
 				layer.alert(data.msg, {icon: 7});
 			}
-		} 
+		}
 	});
 }
 </script>
