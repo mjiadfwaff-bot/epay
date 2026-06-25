@@ -5,6 +5,7 @@ RUN apt-get update \
         libcurl4-openssl-dev \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
+        nginx \
         libpng-dev \
         libzip-dev \
         unzip \
@@ -16,9 +17,12 @@ WORKDIR /var/www/html
 
 COPY . /var/www/html
 COPY docker/entrypoint.sh /usr/local/bin/epay-entrypoint
+COPY docker/nginx.conf /etc/nginx/sites-available/default
 
 RUN chmod +x /usr/local/bin/epay-entrypoint \
+    && rm -f /etc/nginx/sites-enabled/default \
+    && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
     && chown -R www-data:www-data /var/www/html
 
 ENTRYPOINT ["epay-entrypoint"]
-CMD ["php-fpm"]
+CMD ["epay-server"]

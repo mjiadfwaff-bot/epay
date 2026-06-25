@@ -30,4 +30,9 @@ fi
 
 chown www-data:www-data /var/www/html/config.php
 
+if [ "${1:-}" = "epay-server" ]; then
+  docker-php-entrypoint php-fpm -D
+  exec nginx -g "daemon off;"
+fi
+
 exec docker-php-entrypoint "$@"
