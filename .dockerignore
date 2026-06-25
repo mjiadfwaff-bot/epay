@@ -1,0 +1,11 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+Dockerfile
+docker-compose.yml
+compose.yml
+docs/
+test_sql_injection.py
+*.log
