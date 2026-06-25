@@ -22,6 +22,7 @@ COPY docker/nginx.conf /etc/nginx/sites-available/default
 RUN chmod +x /usr/local/bin/epay-entrypoint \
     && rm -f /etc/nginx/sites-enabled/default \
     && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
+    && printf installed > /var/www/html/install/install.lock \
     && chown -R www-data:www-data /var/www/html
 
 ENTRYPOINT ["epay-entrypoint"]
