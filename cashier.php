@@ -79,6 +79,7 @@ body.cashier-modern {
     border: 1px solid rgba(15, 23, 42, .08);
     border-radius: 8px;
     box-shadow: 0 12px 32px rgba(15, 23, 42, .06);
+    box-sizing: border-box;
 }
 .cashier-modern .order-amount12 {
     width: min(720px, calc(100% - 28px));
@@ -139,6 +140,10 @@ body.cashier-modern {
     width: min(720px, calc(100% - 28px));
     padding: 24px;
     margin-top: 16px;
+    box-sizing: border-box;
+}
+.cashier-modern .PayMethod12 .row {
+    margin: 0;
 }
 .cashier-modern .PayMethod12 h2 {
     height: auto;
